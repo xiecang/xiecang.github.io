@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>theme on Codes-Room</title>
+    <link>https://example.com/tags/theme/</link>
+    <description>Recent content in theme on Codes-Room</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Sun, 31 Mar 2019 17:49:40 +0800</lastBuildDate>
+    
+	<atom:link href="https://example.com/tags/theme/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Theme Preview</title>
+      <link>https://example.com/posts/theme-preview/</link>
+      <pubDate>Sun, 31 Mar 2019 17:49:40 +0800</pubDate>
+      
+      <guid>https://example.com/posts/theme-preview/</guid>
+      <description>&lt;h1 id=&#34;headings&#34;&gt;Headings&lt;/h1&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-markdown&#34;&gt;# H1
+## H2
+### H3
+#### H4
+##### H5
+###### H6
+&lt;/code&gt;&lt;/pre&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

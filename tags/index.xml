@@ -20,5 +20,23 @@
       <description></description>
     </item>
     
+    <item>
+      <title>修身</title>
+      <link>https://example.com/tags/%E4%BF%AE%E8%BA%AB/</link>
+      <pubDate>Sun, 31 Mar 2019 17:49:40 +0800</pubDate>
+      
+      <guid>https://example.com/tags/%E4%BF%AE%E8%BA%AB/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>转载</title>
+      <link>https://example.com/tags/%E8%BD%AC%E8%BD%BD/</link>
+      <pubDate>Sun, 31 Mar 2019 17:49:40 +0800</pubDate>
+      
+      <guid>https://example.com/tags/%E8%BD%AC%E8%BD%BD/</guid>
+      <description></description>
+    </item>
+    
   </channel>
 </rss>

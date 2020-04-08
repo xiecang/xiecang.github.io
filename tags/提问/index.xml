@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>提问 on Codes-Room</title>
-    <link>https://example.com/tags/%E6%8F%90%E9%97%AE/</link>
+    <link>https://codes-room.com/tags/%E6%8F%90%E9%97%AE/</link>
     <description>Recent content in 提问 on Codes-Room</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <lastBuildDate>Tue, 27 Mar 2018 10:02:06 +0800</lastBuildDate>
     
-	<atom:link href="https://example.com/tags/%E6%8F%90%E9%97%AE/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://codes-room.com/tags/%E6%8F%90%E9%97%AE/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>[转]能有效解决问题的提问方法</title>
-      <link>https://example.com/posts/how-to-ask-question/</link>
+      <link>https://codes-room.com/posts/how-to-ask-question/</link>
       <pubDate>Tue, 27 Mar 2018 10:02:06 +0800</pubDate>
       
-      <guid>https://example.com/posts/how-to-ask-question/</guid>
+      <guid>https://codes-room.com/posts/how-to-ask-question/</guid>
       <description>方法很简单，就是按如下五点原则来提问（注意，这五点原则不仅适用于技术问题，也适用于其他问题）： 1，描述你需要完成的需求以及目的（目的就是为什么要做这个需求） 2，描述你的想法或思路 3，描述具体的实现过程</description>
     </item>
     

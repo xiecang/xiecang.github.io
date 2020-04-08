@@ -3,64 +3,53 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>https://example.com/</loc>
+    <loc>https://codes-room.com/</loc>
     <lastmod>2019-04-18T17:49:40+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://example.com/posts/</loc>
+    <loc>https://codes-room.com/posts/</loc>
     <lastmod>2019-04-18T17:49:40+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://example.com/tags/</loc>
+    <loc>https://codes-room.com/tags/</loc>
     <lastmod>2019-04-18T17:49:40+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://example.com/posts/managing-oneself/</loc>
+    <loc>https://codes-room.com/posts/managing-oneself/</loc>
     <lastmod>2019-04-18T17:49:40+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://example.com/tags/%E4%BF%AE%E8%BA%AB/</loc>
-    <lastmod>2019-04-18T17:49:40+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://example.com/tags/%E8%BD%AC%E8%BD%BD/</loc>
+    <loc>https://codes-room.com/tags/%E4%BF%AE%E8%BA%AB/</loc>
     <lastmod>2019-04-18T17:49:40+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://example.com/posts/theme-preview/</loc>
-    <lastmod>2019-03-31T17:49:40+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://example.com/tags/theme/</loc>
-    <lastmod>2019-03-31T17:49:40+08:00</lastmod>
+    <loc>https://codes-room.com/tags/%E8%BD%AC%E8%BD%BD/</loc>
+    <lastmod>2019-04-18T17:49:40+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://example.com/posts/how-to-ask-question/</loc>
+    <loc>https://codes-room.com/posts/how-to-ask-question/</loc>
     <lastmod>2018-03-27T10:02:06+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://example.com/tags/%E6%8F%90%E9%97%AE/</loc>
+    <loc>https://codes-room.com/tags/%E6%8F%90%E9%97%AE/</loc>
     <lastmod>2018-03-27T10:02:06+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://example.com/categories/</loc>
+    <loc>https://codes-room.com/categories/</loc>
     <priority>0</priority>
   </url>
   

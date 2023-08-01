@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="DecnVgfxBStKU-1msMSJO3n40koVYL3Oy951LQ776j0">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"xiecang.cc","root":"/","images":"/images","scheme":"Mist","darkmode":true,"version":"8.17.1","exturl":true,"sidebar":{"position":"right","display":"hide","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"style":"default"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":true,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":true,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":true,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.json","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="https://cdn.jsdelivr.net/npm/hexo-theme-next@8.17.1/source/js/config.min.js"></script>
+
+    <meta name="description" content="本文讨论了缓存与数据库不一致问题，探讨了几种常见解决思路。列举了分布式缓存高可用的几种解决方案，以及应对缓存穿透的常见思路。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="高并发常见应对策略-缓存部分">
+<meta property="og:url" content="https://xiecang.cc/high-concurrency-cache/index.html">
+<meta property="og:site_name" content="Cang&#39;s Bolg">
+<meta property="og:description" content="本文讨论了缓存与数据库不一致问题，探讨了几种常见解决思路。列举了分布式缓存高可用的几种解决方案，以及应对缓存穿透的常见思路。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://xiecang.cc/assets/high-concurrency/wirte-back.png">
+<meta property="og:image" content="https://xiecang.cc/assets/high-concurrency/write-back-read.png">
+<meta property="og:image" content="https://xiecang.cc/assets/high-concurrency/%E4%B8%80%E8%87%B4%E6%80%A7hash.png">
+<meta property="og:image" content="https://xiecang.cc/assets/high-concurrency/%E4%B8%80%E8%87%B4%E6%80%A7hash%E5%A2%9E%E5%88%A0%E8%8A%82%E7%82%B9.png">
+<meta property="article:published_time" content="2018-11-14T10:25:12.000Z">
+<meta property="article:modified_time" content="2022-02-07T02:54:41.000Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="高并发">
+<meta property="article:tag" content="缓存">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://xiecang.cc/assets/high-concurrency/wirte-back.png">
+
+
+<link rel="canonical" href="https://xiecang.cc/high-concurrency-cache/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://xiecang.cc/high-concurrency-cache/","path":"high-concurrency-cache/","title":"高并发常见应对策略-缓存部分"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>高并发常见应对策略-缓存部分 | Cang's Bolg</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WX6B5PEK3P"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"G-WX6B5PEK3P","only_pageview":false}</script>
+  <script src="https://cdn.jsdelivr.net/npm/hexo-theme-next@8.17.1/source/js/third-party/analytics/google-analytics.min.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Cang's Bolg" type="application/atom+xml">
+<link rel="alternate" href="/rss2.xml" title="Cang's Bolg" type="application/rss+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Cang's Bolg</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">Xie Cang's blog.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-bell fa-fw"></i>Home</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives<span class="badge">8</span></a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags<span class="badge">13</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%93%E5%AD%98%E4%B8%8E%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B8%8D%E4%B8%80%E8%87%B4%E9%97%AE%E9%A2%98"><span class="nav-number">1.</span> <span class="nav-text">缓存与数据库不一致问题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%8C%E8%A7%A3%E5%86%B3%E4%BA%86%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="nav-number">1.1.</span> <span class="nav-text">缓存是什么，解决了什么问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84%E6%9B%B4%E6%96%B0%E6%93%8D%E4%BD%9C"><span class="nav-number">1.2.</span> <span class="nav-text">一个简单的更新操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%97%81%E8%B7%AF%E7%BC%93%E5%AD%98-Cache-Aside-%E7%AD%96%E7%95%A5"><span class="nav-number">1.3.</span> <span class="nav-text">旁路缓存 Cache Aside 策略</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%AF%E5%90%A6%E8%B0%83%E6%8D%A2%E5%86%99%E7%AD%96%E7%95%A5%E6%AD%A5%E9%AA%A4%E9%A1%BA%E5%BA%8F"><span class="nav-number">1.3.1.</span> <span class="nav-text">可否调换写策略步骤顺序</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%88%E6%9B%B4%E6%96%B0%EF%BC%8C%E5%90%8E%E5%88%A0%E9%99%A4%EF%BC%8C%E5%B0%B1%E4%B8%87%E6%97%A0%E4%B8%80%E5%A4%B1%E4%BA%86%E5%90%97%EF%BC%9F"><span class="nav-number">1.3.2.</span> <span class="nav-text">先更新，后删除，就万无一失了吗？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9B%B4%E5%A4%9A%E4%BC%98%E5%8C%96%E6%80%9D%E8%B7%AF"><span class="nav-number">1.3.3.</span> <span class="nav-text">更多优化思路</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Write-Through%E3%80%81Read-Through-%E5%8F%8A-Write-Back-%E7%AD%96%E7%95%A5"><span class="nav-number">1.4.</span> <span class="nav-text">Write Through、Read Through 及 Write Back 策略</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E7%BC%93%E5%AD%98%E7%9A%84%E9%AB%98%E5%8F%AF%E7%94%A8%E6%96%B9%E6%A1%88"><span class="nav-number">2.</span> <span class="nav-text">分布式缓存的高可用方案</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%B9%E6%A1%88"><span class="nav-number">2.1.</span> <span class="nav-text">客户端方案</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BC%93%E5%AD%98%E6%95%B0%E6%8D%AE%E5%A6%82%E4%BD%95%E5%88%86%E7%89%87"><span class="nav-number">2.1.1.</span> <span class="nav-text">缓存数据如何分片</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Hash-%E5%88%86%E7%89%87%E7%AE%97%E6%B3%95"><span class="nav-number">2.1.2.</span> <span class="nav-text">Hash 分片算法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%80%E8%87%B4%E6%80%A7-Hash-%E5%88%86%E7%89%87%E7%AE%97%E6%B3%95"><span class="nav-number">2.1.3.</span> <span class="nav-text">一致性 Hash 分片算法</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%AD%E9%97%B4%E4%BB%A3%E7%90%86%E5%B1%82%E6%96%B9%E6%A1%88"><span class="nav-number">2.2.</span> <span class="nav-text">中间代理层方案</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E6%96%B9%E6%A1%88"><span class="nav-number">2.3.</span> <span class="nav-text">服务端方案</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%93%E5%AD%98%E7%A9%BF%E9%80%8F"><span class="nav-number">3.</span> <span class="nav-text">缓存穿透</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%98%AF%E4%BB%80%E4%B9%88"><span class="nav-number">3.1.</span> <span class="nav-text">是什么</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-number">3.2.</span> <span class="nav-text">解决方案</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%9E%E7%A7%8D%E7%A9%BA%E5%80%BC"><span class="nav-number">3.2.1.</span> <span class="nav-text">回种空值</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8"><span class="nav-number">3.2.2.</span> <span class="nav-text">使用布隆过滤器</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E5%AE%83%E5%9C%BA%E6%99%AF"><span class="nav-number">3.3.</span> <span class="nav-text">其它场景</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9D%99%E6%80%81%E8%B5%84%E6%BA%90%E5%8A%A0%E9%80%9F"><span class="nav-number">4.</span> <span class="nav-text">静态资源加速</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Xie Cang"
+      src="/images/logo.svg">
+  <p class="site-author-name" itemprop="name">Xie Cang</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL3hpZWNhbmc=" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xiecang"><i class="fab fa-github fa-fw"></i></span>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i></a>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLW5kLzQuMC8="><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/big/by_nc_nd.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://xiecang.cc/high-concurrency-cache/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/logo.svg">
+      <meta itemprop="name" content="Xie Cang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Cang's Bolg">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="高并发常见应对策略-缓存部分 | Cang's Bolg">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          高并发常见应对策略-缓存部分
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2018-11-14 10:25:12" itemprop="dateCreated datePublished" datetime="2018-11-14T10:25:12Z">2018-11-14</time>
+    </span>
+
+  
+    <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>本文讨论了缓存与数据库不一致问题，探讨了几种常见解决思路。<br>列举了分布式缓存高可用的几种解决方案，以及应对缓存穿透的常见思路。</p>
+<span id="more"></span>
+
+<h2 id="缓存与数据库不一致问题"><a href="#缓存与数据库不一致问题" class="headerlink" title="缓存与数据库不一致问题"></a>缓存与数据库不一致问题</h2><h3 id="缓存是什么，解决了什么问题"><a href="#缓存是什么，解决了什么问题" class="headerlink" title="缓存是什么，解决了什么问题"></a>缓存是什么，解决了什么问题</h3><p><span class="exturl" data-url="aHR0cHM6Ly9lbi53aWtpcGVkaWEub3JnL3dpa2kvQ2FjaGVfKGNvbXB1dGluZyk=">缓存介绍<i class="fa fa-external-link-alt"></i></span></p>
+<p>一般来说，用来协调速度相差较大的两种硬件之间数据传输速度差异的结构，让数据更快的返回，都可称为缓存。</p>
+<p>不同硬件之间读写速度差异</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">Latency Comparison Numbers (~2012)</span><br><span class="line">----------------------------------</span><br><span class="line">L1 cache reference                           0.5 ns</span><br><span class="line">Branch mispredict                            5   ns</span><br><span class="line">L2 cache reference                           7   ns                      14x L1 cache</span><br><span class="line">Mutex lock/unlock                           25   ns</span><br><span class="line">Main memory reference                      100   ns                      20x L2 cache, 200x L1 cache</span><br><span class="line">Compress 1K bytes with Zippy             3,000   ns        3 us</span><br><span class="line">Send 1K bytes over 1 Gbps network       10,000   ns       10 us</span><br><span class="line">Read 4K randomly from SSD*             150,000   ns      150 us          ~1GB/sec SSD</span><br><span class="line">Read 1 MB sequentially from memory     250,000   ns      250 us</span><br><span class="line">Round trip within same datacenter      500,000   ns      500 us</span><br><span class="line">Read 1 MB sequentially from SSD*     1,000,000   ns    1,000 us    1 ms  ~1GB/sec SSD, 4X memory</span><br><span class="line">Disk seek                           10,000,000   ns   10,000 us   10 ms  20x datacenter roundtrip</span><br><span class="line">Read 1 MB sequentially from disk    20,000,000   ns   20,000 us   20 ms  80x memory, 20X SSD</span><br><span class="line">Send packet CA-&gt;Netherlands-&gt;CA    150,000,000   ns  150,000 us  150 ms</span><br><span class="line"></span><br><span class="line">Notes</span><br><span class="line">-----</span><br><span class="line">1 ns = 10^-9 seconds</span><br><span class="line">1 us = 10^-6 seconds = 1,000 ns</span><br><span class="line">1 ms = 10^-3 seconds = 1,000 us = 1,000,000 ns</span><br></pre></td></tr></table></figure>
+
+<h3 id="一个简单的更新操作"><a href="#一个简单的更新操作" class="headerlink" title="一个简单的更新操作"></a>一个简单的更新操作</h3><p>有一个用户表，需要把 小明（ID &#x3D; 1）的身高从 170 修改为 180。</p>
+<p>如果更新步骤为：</p>
+<ol>
+<li>更新数据库</li>
+<li>更新缓存</li>
+</ol>
+<p>那么，有可能会造成缓存和数据库数据不一致</p>
+<p>比如同时两个请求 A、B<br>请求 A 希望把小明（ID &#x3D; 1）的身高从 170 修改为 180<br>请求 B 希望把小明（ID &#x3D; 1）的身高从 170 修改为 181</p>
+<p>步骤为：</p>
+<ol>
+<li>请求 A 把数据库 ID &#x3D; 1 的身高修改为 180</li>
+<li>请求 B 把数据库 ID &#x3D; 1 的身高修改为 181</li>
+<li>请求 B 把缓存 ID &#x3D; 1 的身高修改为 181</li>
+<li>请求 A 把缓存 ID &#x3D; 1 的身高修改为 180</li>
+</ol>
+<p>此时，数据库中小明身高为 181， 缓存中小明身高为 180, 缓存和数据库数据不一致</p>
+<h3 id="旁路缓存-Cache-Aside-策略"><a href="#旁路缓存-Cache-Aside-策略" class="headerlink" title="旁路缓存 Cache Aside 策略"></a>旁路缓存 Cache Aside 策略</h3><p>解决<strong>并发情况下缓存和数据库字段一致</strong>，主要用于不经常变化的数据， “一写多读” 场景</p>
+<p><strong>读策略的步骤是：</strong><br>从缓存中读取数据；<br>如果缓存命中，则直接返回数据；<br>如果缓存不命中，则从数据库中查询数据；<br>查询到数据后，将数据写入到缓存中，并且返回给用户。</p>
+<p><strong>写策略的步骤是：</strong><br>更新数据库中的记录；<br>删除缓存记录。</p>
+<h4 id="可否调换写策略步骤顺序"><a href="#可否调换写策略步骤顺序" class="headerlink" title="可否调换写策略步骤顺序"></a>可否调换写策略步骤顺序</h4><p>不可，假设：<br>请求 A 希望把小明（ID &#x3D; 1）的身高从 170 修改为 180<br>请求 B 希望查询小明（ID &#x3D; 1）的身高</p>
+<p>操作顺序是：</p>
+<ol>
+<li>请求 A 删除缓存</li>
+<li>请求 B 查询缓存，未命中</li>
+<li>请求 B 查询数据库，得到身高 170</li>
+<li>请求 B 写入缓存，缓存中小明身高 170</li>
+<li>请求 A 更新数据库，数据库中小明身高 180</li>
+</ol>
+<p>此时，又造成缓存和数据库的不一致。</p>
+<h4 id="先更新，后删除，就万无一失了吗？"><a href="#先更新，后删除，就万无一失了吗？" class="headerlink" title="先更新，后删除，就万无一失了吗？"></a>先更新，后删除，就万无一失了吗？</h4><p>并没有，有一种概率较小的情况<br>请求 A 希望把小明（ID &#x3D; 1）的身高从 170 修改为 180<br>请求 B 希望查询小明（ID &#x3D; 1）的身高</p>
+<p>操作顺序是：</p>
+<ol>
+<li>请求 B 查询缓存，未命中</li>
+<li>请求 B 查询数据库，得到身高 170</li>
+<li>请求 A 更新数据库，数据库中小明身高 180</li>
+<li>请求 A 删除缓存</li>
+<li>请求 B 写入缓存，缓存中小明身高 170</li>
+</ol>
+<p>概率小是因为，一般缓存的写入速度，是快于数据库写入的，所以，在做完 3、4 才完成 5 的概率很小。</p>
+<h4 id="更多优化思路"><a href="#更多优化思路" class="headerlink" title="更多优化思路"></a>更多优化思路</h4><p>Cache Aside 存在的最大的问题是当写入比较频繁时，缓存中的数据会被频繁地清理，这样会对缓存的命中率有一些影响。<br><strong>如果业务对缓存命中率有严格的要求，那么可以考虑两种解决方案：</strong></p>
+<ol>
+<li>使用分布式锁，在更新数据时也更新缓存。因为这样在同一时间只允许一个线程更新缓存，就不会产生并发问题了。当然这么做对于写入的性能会有一些影响；</li>
+<li>另一种做法同样也是在更新数据时更新缓存，只是给缓存加一个较短的过期时间，这样即使出现缓存不一致的情况，缓存的数据也会很快地过期，对业务的影响也是可以接受。</li>
+</ol>
+<h3 id="Write-Through、Read-Through-及-Write-Back-策略"><a href="#Write-Through、Read-Through-及-Write-Back-策略" class="headerlink" title="Write Through、Read Through 及 Write Back 策略"></a>Write Through、Read Through 及 Write Back 策略</h3><p>Write Through（写穿） 的策略是这样的：先查询要写入的数据在缓存中是否已经存在，如果已经存在，则更新缓存中的数据，并且由缓存组件同步更新到数据库中，如果缓存中数据不存在，我们把这种情况叫做 “Write Miss（写失效）”。</p>
+<p>Read Through（读穿） 策略就步骤是这样的：先查询缓存中数据是否存在，如果存在则直接返回，如果不存在，则由缓存组件负责从数据库中同步加载数据。</p>
+<p>Write Back（写回）策略<br>这个策略的核心思想是在写入数据时只写入缓存，并且把缓存块儿标记为 “脏” 的。而脏块儿只有被再次使用时才会将其中的数据写入到后端存储中。</p>
+<p><img src="/../assets/high-concurrency/wirte-back.png" alt="write back 写策略示意图" loading="lazy"></p>
+<p><img src="/../assets/high-concurrency/write-back-read.png" alt="writ back 读策略示意图" loading="lazy"></p>
+<p>操作系统中往磁盘中写数据时采用的就是这种策略。应用场景有 Page Cache，还是日志的异步刷盘、消息队列中消息的异步写入磁盘等。</p>
+<h2 id="分布式缓存的高可用方案"><a href="#分布式缓存的高可用方案" class="headerlink" title="分布式缓存的高可用方案"></a>分布式缓存的高可用方案</h2><p><strong>客户端方案</strong>就是在客户端配置多个缓存的节点，通过缓存写入和读取算法策略来实现分布式，从而提高缓存的可用性。<br><strong>中间代理层方案</strong>是在应用代码和缓存节点之间增加代理层，客户端所有的写入和读取的请求都通过代理层，而代理层中会内置高可用策略，帮助提升缓存系统的高可用<br><strong>服务端方案</strong>就是 Redis 2.4 版本后提出的 Redis Sentinel 方案。</p>
+<h3 id="客户端方案"><a href="#客户端方案" class="headerlink" title="客户端方案"></a>客户端方案</h3><h4 id="缓存数据如何分片"><a href="#缓存数据如何分片" class="headerlink" title="缓存数据如何分片"></a>缓存数据如何分片</h4><p>单一的缓存节点受到机器内存、网卡带宽和单节点请求量的限制，不能承担比较高的并发<br>可以将数据分片，依照分片算法将数据打散到多个不同的节点上，每个节点上存储部分数据。<br>同时也可以在某个节点故障的情况下，其他节点也可以提供服务，保证了一定的可用性。</p>
+<p>一般来讲，分片算法常见的就是 <strong>Hash 分片算法</strong>和<strong>一致性 Hash 分片算法</strong>两种。</p>
+<h4 id="Hash-分片算法"><a href="#Hash-分片算法" class="headerlink" title="Hash 分片算法"></a>Hash 分片算法</h4><p>Hash 分片的算法就是对缓存的 Key 做哈希计算，然后对总的缓存节点个数取余<br>优点：简单易理解<br>缺点：当增加或者减少缓存节点时，缓存总的节点个数变化造成计算出来的节点发生变化，从而造成缓存失效不可用<br>建议：如果采用这种方法，最好建立在对于这组缓存命中率下降不敏感的情况下，比如下面还有另外一层缓存来兜底。</p>
+<h4 id="一致性-Hash-分片算法"><a href="#一致性-Hash-分片算法" class="headerlink" title="一致性 Hash 分片算法"></a>一致性 Hash 分片算法</h4><p>一致性 Hash 算法可以很好地解决增加和删减节点时，命中率下降的问题</p>
+<p>将整个 Hash 值空间组织成一个虚拟的圆环，然后将缓存节点的 IP 地址或者主机名做 Hash 取值后，放置在这个圆环上。<br>当需要确定某一个 Key 需要存取到哪个节点上的时候，先对这个 Key 做同样的 Hash 取值，<br>确定在环上的位置，然后按照顺时针方向在环上 “行走”，遇到的第一个缓存节点就是要访问的节点。</p>
+<p>比方说下面这张图里面，Key1 和 Key2 会落入到 Node1 中，Key3、Key4 会落入到 Node2 中，Key5 落入到 Node3 中，Key6 落入到 Node4 中。<br><img src="/../assets/high-concurrency/%E4%B8%80%E8%87%B4%E6%80%A7hash.png" alt="一致性 hash 示意图" loading="lazy"></p>
+<p>这时如果在 Node1 和 Node2 之间增加一个 Node5，原本命中 Node 的 Key3 现在命中到 Node5，而其它的 Key 都没有变化；</p>
+<p><img src="/../assets/high-concurrency/%E4%B8%80%E8%87%B4%E6%80%A7hash%E5%A2%9E%E5%88%A0%E8%8A%82%E7%82%B9.png" alt="一致性 hash 算法增加和删除节点时缓存节点的变化" loading="lazy"></p>
+<p>优点： <strong>在增加和删除节点时，只有少量的 Key 会 “漂移” 到其它节点上</strong>，而大部分的 Key 命中的节点还是会保持不变，从而可以保证命中率不会大幅下降。<br>缺点：</p>
+<ol>
+<li><p>缓存节点在圆环上分布不平均，会造成部分缓存节点的压力较大；当某个节点故障时，这个节点所要承担的所有访问都会被顺移到另一个节点上，会对后面这个节点造成压力。 （解决方法，引入虚拟节点的概念）</p>
+</li>
+<li><p>一致性 Hash 算法的脏数据问题。</p>
+<ul>
+<li><p>产生原因： 集群中有两个节点 A、B，客户端在 写入 key 计算后需要更新到 A 节点，值为 3，<br>更新成功后 A 节点和客户端连接出现问题，下一次更新到了 B 节点，值为 4，<br>客户端和 A 节点重连，获取 key 值时，得到的是 A 节点的结果 3，出现脏数据</p>
+</li>
+<li><p>解决方法：<strong>设置缓存的过期时间</strong>，这样当发生漂移时，之前存储的脏数据可能已经过期，就可以减少存在脏数据的几率。</p>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="中间代理层方案"><a href="#中间代理层方案" class="headerlink" title="中间代理层方案"></a>中间代理层方案</h3><p>客户端方案中，只能在单一语言中复用代码（如使用java实现后，python 项目无法直接使用），中间代理层方案主要解决了这个问题</p>
+<p>自己实现 or 第三方 Facebook 的 <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2ZhY2Vib29rL21jcm91dGVy">Mcrouter<i class="fa fa-external-link-alt"></i></span>，Twitter 的 <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL3R3aXR0ZXIvdHdlbXByb3h5">Twemproxy<i class="fa fa-external-link-alt"></i></span>，豌豆荚的 <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL0NvZGlzTGFicy9jb2Rpcw==">Codis<i class="fa fa-external-link-alt"></i></span>。</p>
+<h3 id="服务端方案"><a href="#服务端方案" class="headerlink" title="服务端方案"></a>服务端方案</h3><p>Redis 在 2.4 版本中提出了 Redis Sentinel（哨兵）模式来解决主从 Redis 部署时的高可用问题，它可以在主节点挂了以后自动将从节点提升为主节点。</p>
+<h2 id="缓存穿透"><a href="#缓存穿透" class="headerlink" title="缓存穿透"></a>缓存穿透</h2><h3 id="是什么"><a href="#是什么" class="headerlink" title="是什么"></a>是什么</h3><p>从缓存中没有查到数据，而不得不从后端系统（比如数据库）中查询的情况。</p>
+<p>少量的缓存穿透不可避免，对系统也是没有损害的，一般来说，互联网数据访问也遵循二八法则，最重要的事物通常只占 20%（热点数据），而剩余的 80% 的事物确实不重要的。</p>
+<p>如果大量的穿透请求超过了后端系统的承受范围，会造成后端系统的崩溃。接下来，将探讨如何规避这种大量缓存穿透问题。</p>
+<h3 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h3><p>场景：使用前文「旁路缓存 Cache Aside 策略」</p>
+<ol>
+<li>读缓存，未命中</li>
+<li>查数据库，未查到</li>
+<li>不会向缓存中写入值，返回</li>
+<li>再次请求，进入步骤 1</li>
+</ol>
+<h4 id="回种空值"><a href="#回种空值" class="headerlink" title="回种空值"></a>回种空值</h4><p>方案： 在步骤 3 中把空值写入缓存，设置较短的超时时间</p>
+<p>缺点：但如果有大量未命中的请求，缓存内就会有有大量的空值缓存，也就会浪费缓存的存储空间，如果缓存被占满，还会「挤掉」正常的缓存，导致命中率下降。<br><strong>使用的时候应该评估一下缓存容量是否能够支撑</strong></p>
+<h4 id="使用布隆过滤器"><a href="#使用布隆过滤器" class="headerlink" title="使用布隆过滤器"></a>使用布隆过滤器</h4><p>布隆过滤器基本思路如下：</p>
+<ol>
+<li>把集合中的每一个值按照提供的 Hash 算法算出对应的 Hash 值</li>
+<li>将 Hash 值对数组长度取模后得到需要计入数组的索引值，并且将数组这个位置的值从 0 改成 1</li>
+<li>判断一个元素是否存在于这个集合中时，将这个元素按照相同的算法计算出索引值</li>
+<li>如果这个位置的值为 1 就认为这个元素在集合中，否则则认为不在集合中</li>
+</ol>
+<p>使用方法：</p>
+<ol>
+<li>新写入的数据，写入数据库，并依照同样的算法更新布隆过滤器的数组中，相应位置的值。</li>
+<li>查询时，先查询在布隆过滤器中是否存在，如果不存在就直接返回空值</li>
+</ol>
+<p>优点：<br>布隆过滤器性能很好，无论是写入操作还是读取操作，时间复杂度都是 O(1)</p>
+<p>缺点：</p>
+<ol>
+<li>在判断元素是否在集合中时是有一定错误几率的，比如它会把不是集合中的元素判断为处在集合中；</li>
+<li>不支持删除元素。</li>
+</ol>
+<p>第一个缺点主要是 hash 算法的问题，存在一定碰撞几率。<br>但是一旦布隆过滤器判断这个元素不在集合中时，它一定不在集合中。这一点非常适合解决缓存穿透的问题。<br>一个解决方案： 使用多个 Hash 算法为元素计算出多个 Hash 值，只有所有 Hash 值对应的数组中的值都为 1 时，才会认为这个元素在集合中。</p>
+<p>布隆过滤器不支持删除元素的缺陷也和 Hash 碰撞有关。<br>比如，两个元素 A 和 B 都是集合中的元素，它们有相同的 Hash 值，如果删除 A，把数组的相应位置从 1 变成 0，那么在判断 B 的时候发现值是 0，也会判断 B 是不在集合中的元素，就会得到错误的结论。<br>解决方案： 数组中不再只有 0 和 1 两个值，而是存储一个计数。比如如果 A 和 B 同时命中了一个数组的索引，那么这个位置的值就是 2，如果 A 被删除了就把这个值从 2 改为 1。这个方案中的数组不再存储 bit 位，而是存储数值，也就会增加空间的消耗。 （根据业务场景灵活选择）</p>
+<h3 id="其它场景"><a href="#其它场景" class="headerlink" title="其它场景"></a>其它场景</h3><p>回种空值和布隆过滤器是解决缓存穿透问题的两种最主要的解决方案，但是它们也有各自的适用场景，并不能解决所有问题。</p>
+<p>比如当有一个极热点的缓存项，它一旦失效会有大量请求穿透到数据库，这会对数据库造成瞬时极大的压力，我们把这个场景叫做 “dog-pile effect”（狗桩效应），</p>
+<p>这是典型的缓存并发穿透的问题，那么，我们如何来解决这个问题呢？解决狗桩效应的思路是尽量地减少缓存穿透后的并发，方案也比较简单：</p>
+<ol>
+<li><p>在代码中，控制在某一个热点缓存项失效之后启动一个后台线程，穿透到数据库，将数据加载到缓存中，在缓存未加载之前，所有访问这个缓存的请求都不再穿透而直接返回。</p>
+</li>
+<li><p>通过在 Memcached 或者 Redis 中设置分布式锁，只有获取到锁的请求才能够穿透到数据库。</p>
+</li>
+</ol>
+<h2 id="静态资源加速"><a href="#静态资源加速" class="headerlink" title="静态资源加速"></a>静态资源加速</h2><p>使用 CDN。<br>静态资源访问的关键点是就近访问，即北京用户访问北京的数据，杭州用户访问杭州的数据，这样才可以达到性能的最优。<br>CDN 就是将静态的资源分发到，位于多个地理位置机房中的服务器上。</p>
+<ol>
+<li><p>第三方厂商的 CDN 厂商会给我们一个 CDN 的节点 IP，为防止更换 CDN 厂商造成的 IP 变动，使用 DNS 来解决域名映射问题。</p>
+</li>
+<li><p>因为域名解析过程是分级的，每一级有专门的域名服务器承担解析的职责，所以，域名的解析过程有可能需要跨越公网做多次 DNS 查询，在性能上是比较差的。<br> 解决思路： 启动时，对需要解析的域名做预先解析，然后把解析的结果缓存到本地的一个 LRU 缓存里面。</p>
+</li>
+<li><p>GSLB 可以给用户返回一个离着他更近的节点，加快静态资源的访问速度。</p>
+</li>
+</ol>
+<p>完结，撒花。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" rel="tag"># 高并发</a>
+              <a href="/tags/%E7%BC%93%E5%AD%98/" rel="tag"># 缓存</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/high-concurrency-database/" rel="prev" title="高并发常见应对策略-数据库部分">
+                  <i class="fa fa-chevron-left"></i> 高并发常见应对策略-数据库部分
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/xiao-gou-qian-qian/" rel="next" title="小狗钱钱读书笔记">
+                  小狗钱钱读书笔记 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments utterances-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2018 – 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">xiecang.cc</span>
+  </div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/next-theme-pjax/0.6.0/pjax.min.js" integrity="sha256-vxLn1tSKWD4dqbMRyv940UYw4sXgMtYcK6reefzZrao=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/medium-zoom/1.0.8/medium-zoom.min.js" integrity="sha256-7PhEpEWEW0XXQ0k6kQrPKwuoIomz8R8IYyuU1Qew4P8=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/hexo-theme-next@8.17.1/source/js/comments.min.js"></script><script src="https://cdn.jsdelivr.net/npm/hexo-theme-next@8.17.1/source/js/utils.min.js"></script><script src="https://cdn.jsdelivr.net/npm/hexo-theme-next@8.17.1/source/js/motion.min.js"></script><script src="https://cdn.jsdelivr.net/npm/hexo-theme-next@8.17.1/source/js/schemes/muse.min.js"></script><script src="https://cdn.jsdelivr.net/npm/hexo-theme-next@8.17.1/source/js/next-boot.min.js"></script><script src="https://cdn.jsdelivr.net/npm/hexo-theme-next@8.17.1/source/js/pjax.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/hexo-theme-next@8.17.1/source/js/third-party/search/local-search.min.js"></script>
+
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.2.3/mermaid.min.js","integrity":"sha256-JFptYy4KzJ5OQP+Q9fubNf3cxpPPmZKqUOovyEONKrQ="}}</script>
+  <script src="https://cdn.jsdelivr.net/npm/hexo-theme-next@8.17.1/source/js/third-party/tags/mermaid.min.js"></script>
+
+
+
+
+
+  
+  <script data-pjax async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="https://cdn.jsdelivr.net/npm/hexo-theme-next@8.17.1/source/js/third-party/math/mathjax.min.js"></script>
+
+
+<script class="next-config" data-name="utterances" type="application/json">{"enable":true,"repo":"xiecang/blog-comments","issue_term":"pathname","theme":"github-light"}</script>
+<script src="https://cdn.jsdelivr.net/npm/hexo-theme-next@8.17.1/source/js/third-party/comments/utterances.min.js"></script>
+
+</body>
+</html>

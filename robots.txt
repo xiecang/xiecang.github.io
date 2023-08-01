@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /page/*/
+Disallow: /muse/*
+Disallow: /mist/*
+Disallow: /pisces/*
+Host: https://xiecang.cc
+
+Sitemap: https://xiecang.cc/sitemap.xml
+Sitemap: https://xiecang.cc/baidusitemap.xml
